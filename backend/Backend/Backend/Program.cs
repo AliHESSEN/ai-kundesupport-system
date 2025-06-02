@@ -1,6 +1,8 @@
 // Importerer AppDbContext og EF Core
 using Backend.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using Backend.Models;
 
 // Lager en builder for å konfigurere appen
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +30,27 @@ app.UseHttpsRedirection();
 
 // Enkelt test-endepunkt som returnerer "pong" ved GET /ping
 app.MapGet("/ping", () => Results.Ok("pong"));
+
+
+// API-endepunkter
+
+// GET-endepunkt: henter alle support-saker
+app.MapGet("/cases", async (AppDbContext db) =>
+{
+    var cases = await db.SupportCases.ToListAsync();
+    return Results.Ok(cases);
+});
+
+// POST-endepunkt: oppretter ny support-sak
+app.MapPost("/cases", async ([FromBody] SupportCase supportCase, AppDbContext db) =>
+{
+    supportCase.CreatedAt = DateTime.UtcNow;
+    db.SupportCases.Add(supportCase);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/cases/{supportCase.Id}", supportCase);
+});
+
 
 // Starter appen (webserveren)
 app.Run();

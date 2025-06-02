@@ -1,0 +1,44 @@
+# Build results
+bin/
+obj/
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio cache
+.vs/
+
+# Rider cache
+.idea/
+
+# Mac files
+.DS_Store
+
+# Logs
+*.log
+
+# npm dependencies (hvis frontend senere)
+node_modules/
+
+# Docker files (valgfritt hvis du bygger images)
+**/Dockerfile
+
+# Entity Framework migration build artifacts
+Migrations/
+
+# Optional: publish artifacts
+publish/
+out/
+
+# Python virtualenv (hvis du senere bruker noe Python til AI-integrasjon)
+venv/
+
+# Secrets (hvis aktuelt senere)
+secrets.json
+
+# PostgreSQL dumps (bare hvis du tar backups)
+*.sql
+*.dump
