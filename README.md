@@ -36,7 +36,11 @@ Systemet skal effektivisere kundesupport gjennom:
 - [x] Produksjonsklar med Docker og cloud-deploy
 
 
+
+
 ## Sikkerhetstiltak
+
+
 
 | Område                        | Tiltak                                                                                                    |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------- |
