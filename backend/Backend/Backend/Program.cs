@@ -3,7 +3,8 @@ using Backend.Data;
 using Backend.Models; 
 using Microsoft.AspNetCore.Mvc; 
 using Microsoft.EntityFrameworkCore; 
-using System.ComponentModel.DataAnnotations; 
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
 
 // Lager en builder for å konfigurere appen
 var builder = WebApplication.CreateBuilder(args); // Starter konfigurasjon av appen
@@ -12,9 +13,17 @@ var builder = WebApplication.CreateBuilder(args); // Starter konfigurasjon av ap
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))); //henter connection string fra appsettings.json
 
+
+// Registrerer Identity-systemet som skal bruke databasen vår
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+
 // Legger til støtte for Swagger (API-dokumentasjon)
 builder.Services.AddEndpointsApiExplorer(); //legger til støtte for minimal API-dokumentasjon
 builder.Services.AddSwaggerGen(); // legger til Swagger generator
+
 
 // Bygger appen basert på konfigureringen over
 var app = builder.Build();
