@@ -42,6 +42,10 @@ Systemet skal effektivisere kundesupport gjennom:
 
 
 
+
+
+
+
 | Område                        | Tiltak                                                                                                    |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------- |
 | Inputvalidering               | DataAnnotations benyttes for automatisk validering av API-inndata (f.eks. Required, MaxLength).           |
@@ -54,6 +58,9 @@ Systemet skal effektivisere kundesupport gjennom:
 | Logging                       | Applikasjonen logger kun nødvendige feil og aldri sensitive data. Loggstrøm overvåkes via Grafana/Sentry. |
 | Penetrasjonstesting           | Egen penetration testing planlegges før produksjonssetting.                                               |
 | Patch management              | Alle avhengigheter oppdateres jevnlig med Dependabot.                                                     |
+
+
+
 
 
 ## Prosjektstruktur
