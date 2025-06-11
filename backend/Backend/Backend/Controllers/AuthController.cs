@@ -1,5 +1,6 @@
 ﻿using Backend.DTOs;  // Importerer DTO-klassene våre (data fra klient)
 using Backend.Services;  // Importerer AuthService som vi laget
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;  // ASP.NET Core sitt API-rammeverk
 
 namespace Backend.Controllers
@@ -59,5 +60,26 @@ namespace Backend.Controllers
 
 
         }
+
+        [Authorize(Roles = "Admin")] // kun Admin-brukere har tilgang
+        [HttpPost("register-with-role")] // Endepunkt: registrerer en ny bruker med en spesifikk rolle
+        public async Task<IActionResult> RegisterWithRole(RegisterWithRoleRequest request)
+        {
+            // Kaller på AuthService for å opprette bruker og tildele rolle
+            var result = await _authService.RegisterWithRoleAsync(request);
+
+            // Hvis alt gikk bra, returnerer vi HTTP 200 OK
+            if (result.Succeeded)
+            {
+                return Ok("Bruker registrert med rolle");
+            }
+
+            // Hvis noe feilet (f.eks. ugyldig rolle eller svak passord), returneres feilmeldinger
+            return BadRequest(result.Errors);
+        }
+
+
+
+
     }
 }

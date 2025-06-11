@@ -4,6 +4,7 @@ using System.Security.Claims; // For claims (informasjon inni tokenet)
 using System.Text; // For å konvertere hemmelig nøkkel til byte-array
 using Backend.Models; // For ApplicationUser-modellen
 using Backend.DTOs; // For AuthResponse-DTO
+using Microsoft.AspNetCore.Identity; // For å hente brukerens roller
 
 namespace Backend.Helpers
 {
@@ -11,16 +12,17 @@ namespace Backend.Helpers
     public class JwtHelper
     {
         private readonly IConfiguration _configuration; // For å hente inn appsettings
+        private readonly UserManager<ApplicationUser> _userManager; // For å hente brukerens roller
 
-        // Konstruktør - får IConfiguration injisert
-        public JwtHelper(IConfiguration configuration)
+        // Konstruktør - får IConfiguration og UserManager injisert
+        public JwtHelper(IConfiguration configuration, UserManager<ApplicationUser> userManager)
         {
             _configuration = configuration;
+            _userManager = userManager;
         }
 
-
         // Metode som genererer JWT-token for brukeren
-        public AuthResponse GenerateJwtToken(ApplicationUser user)
+        public async Task<AuthResponse> GenerateJwtToken(ApplicationUser user)
         {
             // Henter ut JWT-innstillinger fra appsettings.json
             var jwtSettings = _configuration.GetSection("JwtSettings");
@@ -29,19 +31,22 @@ namespace Backend.Helpers
             var audience = jwtSettings["Audience"]; // Hvem som kan bruke tokenet
             var expires = DateTime.UtcNow.AddHours(2);  // Når tokenet skal utløpe
 
+            // Henter roller for brukeren
+            var roles = await _userManager.GetRolesAsync(user);
 
             // Lager en liste med claims (data som pakkes inn i tokenet)
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id), // Bruker-ID
                 new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName!) // Brukernavn
             };
 
+            // Legger til rollene som egne claims i tokenet
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             // Lager sikkerhetsnøkkelen fra hemmelig nøkkel (må konverteres til bytes)
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Lager signaturen
-
 
             // Lager selve JWT-tokenet
             var token = new JwtSecurityToken(

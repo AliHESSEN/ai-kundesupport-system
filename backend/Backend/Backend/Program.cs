@@ -9,6 +9,8 @@ using Backend.Services; // legger til AuthService
 using Microsoft.AspNetCore.Authentication.JwtBearer; // for JWT-autentisering
 using Microsoft.IdentityModel.Tokens; // for token-validering
 using System.Text; // for å konvertere hemmelig nøkkel til bytes
+using Backend.Initialization;
+
 
 // Lager en builder for å konfigurere appen
 var builder = WebApplication.CreateBuilder(args); // Starter konfigurasjon av appen
@@ -18,18 +20,22 @@ var builder = WebApplication.CreateBuilder(args); // Starter konfigurasjon av ap
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))); //henter connection string fra appsettings.json
 
+
 // Registrerer Identity-systemet som skal bruke databasen vår
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
+
 // Legger til våre egne tjenester i Dependency Injection
 builder.Services.AddScoped<JwtHelper>(); // registrerer JwtHelper
 builder.Services.AddScoped<AuthService>(); // registrerer AuthService
 
+
 // Henter ut JWT-innstillinger fra appsettings.json
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
+
 
 // Konfigurerer JWT-autentisering
 builder.Services.AddAuthentication(options =>
@@ -51,12 +57,16 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+
+
 // Legger til støtte for kontrollerne våre (f.eks. AuthController)
 builder.Services.AddControllers();
 
 
+
 // Legger til støtte for Swagger (API-dokumentasjon)
 builder.Services.AddEndpointsApiExplorer(); //legger til støtte for minimal API-dokumentasjon
+
 
 
 builder.Services.AddSwaggerGen(options =>
@@ -71,6 +81,8 @@ builder.Services.AddSwaggerGen(options =>
         In = Microsoft.OpenApi.Models.ParameterLocation.Header, // Token skal legges i HTTP header
         Description = "Skriv inn JWT-tokenet slik: Bearer {token}" // Bruksbeskrivelse i Swagger UI
     });
+
+
 
     // Sier til Swagger at alle endpoints kan sikres med denne Bearer-skjemaet
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
@@ -97,6 +109,15 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 
+// dette lager admin, SupportStaff og User rollene i databasen hvis de ikke finnes fra før
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await DataInitializer.SeedRolesAsync(services);
+}
+
+
+
 
 // Viser Swagger kun i utviklingsmiljø
 if (app.Environment.IsDevelopment())
@@ -120,6 +141,7 @@ app.UseAuthorization(); // aktiverer autorisasjon
 app.MapControllers(); // ruter alle kontrollerbaserte API-endepunkter
 
 
+
 // Enkelt test-endepunkt som returnerer "pong" ved GET /ping
 app.MapGet("/ping", () => Results.Ok("pong")); // helse-sjekk-endepunkt
 
@@ -141,6 +163,7 @@ app.MapPost("/cases", async ([FromBody] SupportCase supportCase, AppDbContext db
     var validationContext = new ValidationContext(supportCase); //lager et valideringskontekst-objekt for modellen supportCase. Dette er nødvendig fordi validatoren trenger litt "metadata" om hvilket objekt som skal valideres.
     var validationResults = new List<ValidationResult>(); // lager en tom liste som skal fylles med eventuelle feilmeldinger under valideringen
 
+
     // Kjører valideringen av modellen
     if (!Validator.TryValidateObject(supportCase, validationContext, validationResults, true))
     {
@@ -148,6 +171,7 @@ app.MapPost("/cases", async ([FromBody] SupportCase supportCase, AppDbContext db
         var errors = validationResults.Select(v => v.ErrorMessage); //samler opp feilmeldingene
         return Results.BadRequest(errors); //returnerer feilene til klienten
     }
+
 
     supportCase.CreatedAt = DateTime.UtcNow; //setter opprettelsestidspunkt til nå
 
