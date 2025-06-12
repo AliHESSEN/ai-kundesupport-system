@@ -23,6 +23,13 @@ namespace Backend.Models
         public string Status { get; set; } = "Open";   // Status på saken (f.eks. "Open", "Closed")
 
 
+        // bruker disse for hvem som har oppretter saker
+
+        public string? CreatedById { get; set; } // Bruker-ID som opprettet saken bruker ? for å tillate null verdi
+        public ApplicationUser? CreatedBy { get; set; } // Navigasjonsegenskap (for relasjon)
+
+
+
 
     }
 }
