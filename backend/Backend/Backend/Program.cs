@@ -10,6 +10,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer; // for JWT-autentisering
 using Microsoft.IdentityModel.Tokens; // for token-validering
 using System.Text; // for å konvertere hemmelig nøkkel til bytes
 using Backend.Initialization;
+using System.Security.Claims;
+using Backend.Endpoints; // for MapSupportCaseEndpoints
+
+
 
 
 // Lager en builder for å konfigurere appen
@@ -109,6 +113,7 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 
+
 // dette lager admin, SupportStaff og User rollene i databasen hvis de ikke finnes fra før
 using (var scope = app.Services.CreateScope())
 {
@@ -137,76 +142,14 @@ app.UseAuthorization(); // aktiverer autorisasjon
 
 
 
-// Aktiverer kontrollerne våre
-app.MapControllers(); // ruter alle kontrollerbaserte API-endepunkter
-
-
-
 // Enkelt test-endepunkt som returnerer "pong" ved GET /ping
-app.MapGet("/ping", () => Results.Ok("pong")); // helse-sjekk-endepunkt
+app.MapGet("/ping", () => Results.Ok("pong")); // en test for endepunkt
 
 
-
-// GET-endepunkt: henter alle support-saker
-app.MapGet("/cases", async (AppDbContext db) =>
-{
-    var cases = await db.SupportCases.ToListAsync(); // Leser alle support-saker fra databasen
-    return Results.Ok(cases); // Returnerer listen som HTTP 200 OK
-}).RequireAuthorization(); // krever gyldig JWT-token
-
-
-
-// POST-endepunkt: oppretter ny support-sak
-app.MapPost("/cases", async (
-    [FromBody] SupportCase supportCase,
-    HttpContext httpContext, // brukes for å hente innlogget bruker fra JWT-token
-    UserManager<ApplicationUser> userManager, // brukes for å slå opp bruker i databasen
-    AppDbContext db) =>
-{
-
-    var validationContext = new ValidationContext(supportCase); //lager et valideringskontekst-objekt for modellen supportCase. Dette er nødvendig fordi validatoren trenger litt "metadata" om hvilket objekt som skal valideres.
-    var validationResults = new List<ValidationResult>(); // lager en tom liste som skal fylles med eventuelle feilmeldinger under valideringen
-
-
-    // Kjører valideringen av modellen
-    if (!Validator.TryValidateObject(supportCase, validationContext, validationResults, true))
-    {
-        // Hvis valideringen feiler, returner 400 Bad Request med feilmeldingene
-        var errors = validationResults.Select(v => v.ErrorMessage); //samler opp feilmeldingene
-        return Results.BadRequest(errors); //returnerer feilene til klienten
-    }
-
-
-    // Henter bruker-ID fra tokenet (NameIdentifier er standard claim for bruker-ID)
-    var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-    if (string.IsNullOrEmpty(userId))
-    {
-        return Results.Unauthorized(); // hvis vi ikke finner bruker-ID i tokenet, så er forespørselen ugyldig
-    }
-
-    // Henter brukeren fra databasen basert på ID
-    var user = await userManager.FindByIdAsync(userId);
-
-    if (user == null)
-    {
-        return Results.Unauthorized(); // hvis brukeren ikke finnes i databasen
-    }
-
-    // Setter opprettelsestidspunkt til nå (dette var fra før)
-    supportCase.CreatedAt = DateTime.UtcNow;
-
-    // Setter bruker-ID som opprettet saken (kobling til innlogget bruker)
-    supportCase.CreatedById = user.Id;
-
-    db.SupportCases.Add(supportCase); // Legger til support-saken i databasen
-    await db.SaveChangesAsync(); // Lagrer endringene til databasen
-
-    return Results.Created($"/cases/{supportCase.Id}", supportCase); // returnerer HTTP 201 Created med den lagrede saken
-
-}).RequireAuthorization(); // kun innloggede brukere får sende forespørsel
 
 
 
 // Starter appen (webserveren)
+app.MapControllers(); // kontrollerbasert API
+app.MapSupportCaseEndpoints(); // minimal API-er for support
 app.Run();

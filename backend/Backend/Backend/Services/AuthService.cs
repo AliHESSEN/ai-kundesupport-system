@@ -29,6 +29,7 @@ namespace Backend.Services
             return await _userManager.CreateAsync(user, request.Password);
         }
 
+
         // Metode for å logge inn bruker
         public async Task<AuthResponse?> LoginAsync(LoginRequest request)
         {

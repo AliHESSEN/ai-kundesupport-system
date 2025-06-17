@@ -37,16 +37,21 @@ namespace Backend.Helpers
             // Lager en liste med claims (data som pakkes inn i tokenet)
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id), // Bruker-ID
-                new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName!) // Brukernavn
+                    new Claim(ClaimTypes.NameIdentifier, user.Id), //bruker id 
+                    new Claim(ClaimTypes.Name, user.UserName!) //bruker navn
             };
+
 
             // Legger til rollene som egne claims i tokenet
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
+
+
             // Lager sikkerhetsnøkkelen fra hemmelig nøkkel (må konverteres til bytes)
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); // Lager signaturen
+
+
 
             // Lager selve JWT-tokenet
             var token = new JwtSecurityToken(
