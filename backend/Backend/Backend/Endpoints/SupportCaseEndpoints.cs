@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using Backend.DTOs;
+
+
 
 namespace Backend.Endpoints
 {
@@ -12,12 +15,15 @@ namespace Backend.Endpoints
     {
         public static void MapSupportCaseEndpoints(this WebApplication app)
         {
-            // GET: /cases
+            // GET: /cases  API-endepunkt som Henter supportsaker basert på hvem som er innlogget og hvilken rolle de har
+
             app.MapGet("/cases", async (HttpContext context, AppDbContext db, ILogger<Program> logger) =>
             {
+                // får bruker-ID og rolle fra JWT-tokenet (som ble satt ved innlogging)
                 var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var role = context.User.FindFirst(ClaimTypes.Role)?.Value;
 
+                //dersom brukeren ikke er logget inn eller mangler rolleinformasjon, så return  401 Unauthorized
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
                 {
                     return Results.Unauthorized();
@@ -25,28 +31,37 @@ namespace Backend.Endpoints
 
                 List<SupportCase> cases;
 
+                // Hvis innlogget bruker er en vanlig bruker , så skal de kun se saker de selv har opprettet
                 if (role == "User")
                 {
                     cases = await db.SupportCases
                         .Where(c => c.CreatedById == userId)
                         .ToListAsync();
                 }
+                // Hvis innlogget bruker er SupportStaff eller Admin, så hent alle saker i systemet
                 else if (role == "SupportStaff" || role == "Admin")
                 {
                     cases = await db.SupportCases.ToListAsync();
                 }
+                // Hvis rollen ikke er kjent eller ikke har tilgang, returner 403 Forbid
                 else
                 {
-                    return Results.Forbid(); // ukjent rolle
+                    return Results.Forbid();
                 }
 
+                // Logger at brukeren hentet saker, og hvor mange som ble hentet
                 logger.LogInformation("Bruker {userId} med rolle {role} hentet {count} saker", userId, role, cases.Count);
+
+                // Returnerer listen over saker med statuskode 200 OK
                 return Results.Ok(cases);
 
-            }).RequireAuthorization();
+            }).RequireAuthorization(); // bare innloggede brukere kan bruke dette endepunktet
 
 
-            // POST-endepunkt: oppretter ny support-sak
+
+
+
+            // POST-endepunkt: API som brukes til å opprette ny supportsak
             app.MapPost("/cases", async (
                 [FromBody] SupportCase supportCase,
                 HttpContext httpContext, // brukes for å hente innlogget bruker fra JWT-token
@@ -94,7 +109,56 @@ namespace Backend.Endpoints
 
                 return Results.Created($"/cases/{supportCase.Id}", supportCase); // returnerer HTTP 201 Created med den lagrede saken
 
+
             }).RequireAuthorization(); // kun innloggede brukere får sende forespørsel
+
+
+
+            // PATCH /cases/{id} er et API-endepunkt for å oppdatere status på en eksisterende supportsak
+
+            app.MapPatch("/cases/{id}", async (
+                int id, // ID-en til supportsaken vi ønsker å oppdatere
+                [FromBody] UpdateCaseStatusRequest request, //ny status sendes inn i JSON-format
+                HttpContext context, // brukes for å hente informasjon om den innloggede brukeren
+                AppDbContext db, //tilgang til databasen
+                ILogger<Program> logger // logger som brukes for feilsøking og historikk
+            ) =>
+            {
+                //henter ID og rolle fra JWT-tokenet til den innloggede brukeren
+                var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var role = context.User.FindFirst(ClaimTypes.Role)?.Value;
+
+
+                // Hvis ikke bruker er logget inn eller mangler rolle så vil det føre til unauthorized
+                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
+                    return Results.Unauthorized();
+
+                //bare Admin eller SupportStaff har tilgang til å endre status
+                if (role != "Admin" && role != "SupportStaff")
+                    return Results.Forbid();
+
+                // finner supportsaken med en gitt ID
+                var supportCase = await db.SupportCases.FindAsync(id);
+
+                // Hvis den ikke finnes, så returneres 404 Not Found
+                if (supportCase == null)
+                    return Results.NotFound($"Support-sak med ID {id} ble ikke funnet.");
+
+                // Oppdaterer status på supportsaken med verdien fra klienten
+                supportCase.Status = request.Status;
+
+                // lagrer endringene i databasen
+                await db.SaveChangesAsync();
+
+                // logger hvem som endret hvilken sak til hvilken status
+                logger.LogInformation("Bruker {userId} endret status på sak {caseId} til '{status}'", userId, id, request.Status);
+
+                //returnerer den oppdaterte saken som bekreftelse
+                return Results.Ok(supportCase);
+
+            }).RequireAuthorization(); // skal kun tilgjengelig for innloggede brukere
+
+
 
 
         }
