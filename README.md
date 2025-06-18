@@ -1,11 +1,11 @@
-
 # Kundesupport-system med AI-integrasjon
 
-Et fullstack websystem for håndtering av supportsaker med integrert AI-chatbot. Prosjektet er utviklet for å demonstrere hele utviklingspipen – fra idé og arkitektur til produksjonssetting – med moderne teknologier brukt i norsk næringsliv.
+Et fullstack websystem for håndtering av supportsaker med integrert AI-chatbot. Prosjektet er utviklet for å demonstrere hele utviklingspipen – fra idé og arkitektur til produksjonssetting – med moderne teknologier brukt i næringslivet.
 
 ## Formål
 
 Systemet skal effektivisere kundesupport gjennom:
+
 - Et brukergrensesnitt for å opprette og administrere saker
 - AI-chatbot (OpenAI) som svarer på spørsmål
 - Fallback til menneskelig support
@@ -13,55 +13,74 @@ Systemet skal effektivisere kundesupport gjennom:
 
 ## Teknologistack
 
-| Delområde          | Teknologi                         |
-|--------------------|------------------------------------|
-| Backend            | C# / ASP.NET Core (Minimal API)    |
-| Frontend           | React (Next.js) + TypeScript       |
-| Database           | PostgreSQL + Entity Framework Core |
-| AI-integrasjon     | OpenAI API (GPT-4 / GPT-3.5)        |
-| Autentisering      | ASP.NET Identity + JWT             |
-| Logging/Monitoring | Grafana Cloud / Sentry.io          |
-| CI/CD              | GitHub Actions                     |
-| Containerisering   | Docker                             |
-| Hosting            | Azure / Railway / Render           |
+| Delområde         | Teknologi                             |
+|-------------------|----------------------------------------|
+| Backend           | C# / ASP.NET Core (Minimal API)       |
+| Frontend          | React (Next.js) + TypeScript          |
+| Database          | PostgreSQL + Entity Framework Core    |
+| AI-integrasjon    | OpenAI API (GPT-4 / GPT-3.5)          |
+| Autentisering     | ASP.NET Identity + JWT                |
+| Logging/Monitoring| Grafana Cloud / Sentry.io             |
+| CI/CD             | GitHub Actions                        |
+| Containerisering  | Docker                                |
+| Hosting           | Azure / Railway / Render              |
 
 ## Funksjoner
 
-- [x] Brukerautentisering og roller
-- [x] AI-chatbot for automatiserte svar
-- [x] Opprettelse og visning av supportsaker
-- [x] Admin-dashboard for oversikt og styring
-- [x] Logging og overvåkning
-- [x] CI/CD med testing og staging
-- [x] Produksjonsklar med Docker og cloud-deploy
+- Brukerautentisering og roller
+- AI-chatbot for automatiserte svar
+- Opprettelse og visning av supportsaker
+- Endring av sakstatus (kun SupportStaff og Admin)
+- Rollebasert tilgangsstyring direkte i API
+- Admin-dashboard for oversikt og styring
+- Logging og overvåkning
+- CI/CD med testing og staging
+- Produksjonsklar med Docker og cloud-deploy
+
+## Tilgangskontroll og rollelogikk
+
+Applikasjonen benytter **JWT-basert autentisering** og **rollebasert autorisasjon** for å sikre at brukere kun har tilgang til relevante data og funksjoner:
+
+- **User**: Kan opprette og se sine egne saker.
+- **SupportStaff**: Har tilgang til alle saker og kan endre status på dem.
+- **Admin**: Har full tilgang, inkludert til å registrere nye brukere med roller.
+
+Statusendringer skjer via følgende endepunkt:
+PATCH /cases/{id}
+Authorization: Bearer <token>
+Body: { "status": "In Progress" }
 
 
 
+- Hvis bruker ikke har rollen `Admin` eller `SupportStaff`, returnerer API-et `403 Forbidden`.
+- Validering av statusfeltet håndteres i en dedikert DTO (Data Transfer Object).
 
 ## Sikkerhetstiltak
 
+| Område                    | Tiltak                                                                 |
+|---------------------------|------------------------------------------------------------------------|
+| Inputvalidering           | DataAnnotations benyttes for automatisk validering av API-inndata      |
+| Autentisering og autorisasjon | ASP.NET Identity med JWT og rollebasert tilgangskontroll         |
+| Secrets management        | API-nøkler og connection strings håndteres via miljøvariabler          |
+| Sårbarhetsskanning        | GitHub Dependabot og Snyk integrert i CI/CD-pipelinen                  |
+| Statisk kodeanalyse       | SonarQube eller tilsvarende anbefales for kodekvalitetsanalyse         |
+| Secret scanning           | GitHub Secret Scanning er aktivert                                     |
+| HTTPS enforcement         | Alle API-kall håndteres over HTTPS                                     |
+| Logging                   | Kun nødvendige feil logges – aldri sensitive data                      |
+| Penetrasjonstesting       | Egen plan for testing før produksjonssetting                           |
+| Patch management          | Alle avhengigheter oppdateres jevnlig med Dependabot                   |
+
+## Dokumentasjon og videre utvikling
+
+- API-endepunkter er beskrevet direkte i koden med forklarende kommentarer.
+- Kodebasen følger prinsipper for minimal API-design, med tydelig separasjon av ansvar.
+- I prosjektets sluttrapport inngår en teknisk vedlegg med detaljerte beskrivelser av:
+  - DTO-er
+  - Claims og rolleuttrekk fra JWT
+  - Tilgangsnivå og sikkerhetskontroller
+  - Logging og sporbarhet
 
 
+---
 
-
-
-
-| Område                        | Tiltak                                                                                                    |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Inputvalidering               | DataAnnotations benyttes for automatisk validering av API-inndata (f.eks. Required, MaxLength).           |
-| Autentisering og autorisasjon | ASP.NET Identity med JWT og rollebasert tilgangskontroll.                                                 |
-| Secrets management            | API-nøkler og connection strings håndteres via miljøvariabler eller secrets manager i produksjon.         |
-| Sårbarhetsskanning            | GitHub Dependabot og Snyk integreres i CI/CD-pipelinen for overvåking av avhengigheter.                   |
-| Statisk kodeanalyse           | SonarQube eller tilsvarende kan benyttes for løpende kodekvalitetsanalyse.                                |
-| Secret scanning               | GitHub Secret Scanning er aktivert for å oppdage lekkede hemmeligheter.                                   |
-| HTTPS enforcement             | Alle API-kall håndteres over HTTPS (UseHttpsRedirection aktivert).                                        |
-| Logging                       | Applikasjonen logger kun nødvendige feil og aldri sensitive data. Loggstrøm overvåkes via Grafana/Sentry. |
-| Penetrasjonstesting           | Egen penetration testing planlegges før produksjonssetting.                                               |
-| Patch management              | Alle avhengigheter oppdateres jevnlig med Dependabot.                                                     |
-
-
-
-
-
-## Prosjektstruktur
 
