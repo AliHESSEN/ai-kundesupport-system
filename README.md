@@ -45,10 +45,6 @@ Applikasjonen benytter **JWT-basert autentisering** og **rollebasert autorisasjo
 - **SupportStaff**: Har tilgang til alle saker og kan endre status på dem.
 - **Admin**: Har full tilgang, inkludert til å registrere nye brukere med roller.
 
-Statusendringer skjer via følgende endepunkt:
-PATCH /cases/{id}
-Authorization: Bearer <token>
-Body: { "status": "In Progress" }
 
 
 
