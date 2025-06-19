@@ -147,9 +147,12 @@ app.MapGet("/ping", () => Results.Ok("pong")); // en test for endepunkt
 
 
 
-
-
 // Starter appen (webserveren)
 app.MapControllers(); // kontrollerbasert API
 app.MapSupportCaseEndpoints(); // minimal API-er for support
 app.Run();
+
+
+
+
+

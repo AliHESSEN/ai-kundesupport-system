@@ -14,7 +14,10 @@ namespace Backend.Endpoints
     public static class SupportCaseEndpoints
     {
         public static void MapSupportCaseEndpoints(this WebApplication app)
+
         {
+
+
             // GET: /cases  API-endepunkt som Henter supportsaker basert på hvem som er innlogget og hvilken rolle de har
 
             app.MapGet("/cases", async (HttpContext context, AppDbContext db, ILogger<Program> logger) =>
@@ -49,8 +52,21 @@ namespace Backend.Endpoints
                     return Results.Forbid();
                 }
 
-                // Logger at brukeren hentet saker, og hvor mange som ble hentet
+                //logg om hvem, hvilken rolle de har og hvor mange saker som har blitt hentet
                 logger.LogInformation("Bruker {userId} med rolle {role} hentet {count} saker", userId, role, cases.Count);
+
+                // Audit-logg til database
+                db.AuditLogs.Add(new AuditLog
+                {
+                    UserId = userId,
+                    Role = role,
+                    Action = "ViewedCases",
+                    Timestamp = DateTime.UtcNow,
+                    AdditionalInfo = $"Antall saker: {cases.Count}"
+                });
+
+                await db.SaveChangesAsync(); // Husk å lagre loggen også
+
 
                 // Returnerer listen over saker med statuskode 200 OK
                 return Results.Ok(cases);
@@ -144,17 +160,42 @@ namespace Backend.Endpoints
                 if (supportCase == null)
                     return Results.NotFound($"Support-sak med ID {id} ble ikke funnet.");
 
-                // Oppdaterer status på supportsaken med verdien fra klienten
-                supportCase.Status = request.Status;
+                var gammelStatus = supportCase.Status; // Ta vare på nåværende status før endring
+                supportCase.Status = request.Status;   // Oppdaterer til ny status
 
                 // lagrer endringene i databasen
                 await db.SaveChangesAsync();
 
-                // logger hvem som endret hvilken sak til hvilken status
-                logger.LogInformation("Bruker {userId} endret status på sak {caseId} til '{status}'", userId, id, request.Status);
 
-                //returnerer den oppdaterte saken som bekreftelse
-                return Results.Ok(supportCase);
+                // Opprett og lagre en auditlogg
+
+                var auditLog = new AuditLog
+                {
+                    UserId = userId,
+                    Role = role,
+                    Action = "Oppdaterte status",
+                    CaseId = supportCase.Id,
+                    Timestamp = DateTime.UtcNow,
+                    Details = $"Endret status fra '{gammelStatus}' til '{request.Status}'"
+                };
+
+
+                db.AuditLogs.Add(auditLog);
+                await db.SaveChangesAsync(); // Lagre auditloggen
+
+
+
+                // Logger hvem som endret hva
+                logger.LogInformation(
+                    "Bruker {userId} (rolle: {role}) endret status på sak {caseId} fra '{gammelStatus}' til '{nyStatus}' kl {time}",
+                     userId, role, supportCase.Id, gammelStatus, request.Status, DateTime.UtcNow
+
+                );
+
+                
+                return Results.Ok(supportCase); // Returnerer den oppdaterte saken som respons
+
+
 
             }).RequireAuthorization(); // skal kun tilgjengelig for innloggede brukere
 

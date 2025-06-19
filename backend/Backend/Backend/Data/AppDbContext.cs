@@ -13,5 +13,13 @@ namespace Backend.Data
 
         // Dette representerer tabellen "SupportCases" i databasen
         public DbSet<SupportCase> SupportCases { get; set; } = null!;
+
+
+        // dette representerer tabellen "AuditLogs" i databasen, som brukes til å lagre sporbarhetslogg (audit trail)
+        public DbSet<AuditLog> AuditLogs { get; set; }
+
+
+
+
     }
 }

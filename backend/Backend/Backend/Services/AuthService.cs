@@ -25,9 +25,20 @@ namespace Backend.Services
         // Metode for å registrere ny bruker
         public async Task<IdentityResult> RegisterAsync(RegisterRequest request)
         {
-            var user = new ApplicationUser { UserName = request.UserName };
-            return await _userManager.CreateAsync(user, request.Password);
+            var user = new ApplicationUser { UserName = request.UserName, Email = request.UserName };
+
+            // Oppretter brukeren
+            var result = await _userManager.CreateAsync(user, request.Password);
+
+            // Hvis brukeren ble opprettet – tildel "User"-rolle
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, "User");
+            }
+
+            return result;
         }
+
 
 
         // Metode for å logge inn bruker
@@ -48,6 +59,7 @@ namespace Backend.Services
         }
 
 
+        //registerer med rolle
         public async Task<IdentityResult> RegisterWithRoleAsync(RegisterWithRoleRequest request)
         {
             // Sjekker at alle nødvendige data er fylt ut
