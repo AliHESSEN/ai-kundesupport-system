@@ -18,44 +18,62 @@ namespace Backend.Endpoints
         {
 
 
-            // GET: /cases  API-endepunkt som Henter supportsaker basert på hvem som er innlogget og hvilken rolle de har
+            // GET-endepunkt for å hente support-saker, med søk og filtrering
 
-            app.MapGet("/cases", async (HttpContext context, AppDbContext db, ILogger<Program> logger) =>
+            app.MapGet("/cases", async (
+                HttpContext context,
+                AppDbContext db,
+                ILogger<Program> logger,
+                [FromQuery] string? search, // valgfritt søkeord i tittel eller beskrivelse
+                [FromQuery] string? status  // valgfri filtrering på status
+            ) =>
+
             {
-                // får bruker-ID og rolle fra JWT-tokenet (som ble satt ved innlogging)
+                // Henter bruker-ID og rolle fra JWT-tokenet
                 var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var role = context.User.FindFirst(ClaimTypes.Role)?.Value;
 
-                //dersom brukeren ikke er logget inn eller mangler rolleinformasjon, så return  401 Unauthorized
+
+                // Hvis bruker ikke er logget inn, returner 401
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
-                {
                     return Results.Unauthorized();
-                }
 
-                List<SupportCase> cases;
+                // Start en spørring som kan bygges videre på
+                var query = db.SupportCases.AsQueryable();
 
-                // Hvis innlogget bruker er en vanlig bruker , så skal de kun se saker de selv har opprettet
+                // Hvis brukeren er en vanlig bruker, skal de bare se sine egne saker
                 if (role == "User")
                 {
-                    cases = await db.SupportCases
-                        .Where(c => c.CreatedById == userId)
-                        .ToListAsync();
+                    query = query.Where(c => c.CreatedById == userId);
                 }
-                // Hvis innlogget bruker er SupportStaff eller Admin, så hent alle saker i systemet
-                else if (role == "SupportStaff" || role == "Admin")
-                {
-                    cases = await db.SupportCases.ToListAsync();
-                }
-                // Hvis rollen ikke er kjent eller ikke har tilgang, returner 403 Forbid
-                else
+                // Hvis rollen er ukjent eller ikke har tilgang, nekt tilgang
+                else if (role != "SupportStaff" && role != "Admin")
                 {
                     return Results.Forbid();
                 }
 
-                //logg om hvem, hvilken rolle de har og hvor mange saker som har blitt hentet
+                // Hvis status-filter er gitt, filtrer på det
+                if (!string.IsNullOrWhiteSpace(status))
+                {
+                    query = query.Where(c => c.Status.ToLower() == status.ToLower());
+                }
+
+                // Hvis søkeord er oppgitt, filtrer på tittel og beskrivelse
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    var lowered = search.ToLower();
+                    query = query.Where(c =>
+                        c.Title.ToLower().Contains(lowered) ||
+                        c.Description.ToLower().Contains(lowered));
+                }
+
+                // Henter resultatet fra databasen
+                var cases = await query.ToListAsync();
+
+                // Logger antall saker og hvem som hentet dem
                 logger.LogInformation("Bruker {userId} med rolle {role} hentet {count} saker", userId, role, cases.Count);
 
-                // Audit-logg til database
+                // Lagre handlingen i audit-loggen
                 db.AuditLogs.Add(new AuditLog
                 {
                     UserId = userId,
@@ -65,13 +83,13 @@ namespace Backend.Endpoints
                     AdditionalInfo = $"Antall saker: {cases.Count}"
                 });
 
-                await db.SaveChangesAsync(); // Husk å lagre loggen også
+                await db.SaveChangesAsync(); // Lagrer loggen
 
-
-                // Returnerer listen over saker med statuskode 200 OK
+                // Returnerer listen over saker som JSON (200 OK)
                 return Results.Ok(cases);
+            }).RequireAuthorization(); // Kun for innloggede brukere
 
-            }).RequireAuthorization(); // bare innloggede brukere kan bruke dette endepunktet
+
 
 
 
