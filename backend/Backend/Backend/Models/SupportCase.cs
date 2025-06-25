@@ -18,6 +18,8 @@ namespace Backend.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // Når saken ble opprettet (settes automatisk til nåtid)
 
+        public DateTime? ClosedAt { get; set; } // når saken ble lukket
+
 
         [Required(ErrorMessage = "Status er påkrevd")]
         public string Status { get; set; } = "Open";   // Status på saken (f.eks. "Open", "Closed")

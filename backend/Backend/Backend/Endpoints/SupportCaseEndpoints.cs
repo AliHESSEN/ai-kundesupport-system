@@ -124,6 +124,7 @@ namespace Backend.Endpoints
                     return Results.Unauthorized(); // hvis vi ikke finner bruker-ID i tokenet, så er forespørselen ugyldig
                 }
 
+
                 // Henter brukeren fra databasen basert på ID
                 var user = await userManager.FindByIdAsync(userId);
 
@@ -157,6 +158,7 @@ namespace Backend.Endpoints
                 AppDbContext db, //tilgang til databasen
                 ILogger<Program> logger // logger som brukes for feilsøking og historikk
             ) =>
+
             {
                 //henter ID og rolle fra JWT-tokenet til den innloggede brukeren
                 var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -167,6 +169,7 @@ namespace Backend.Endpoints
                 if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
                     return Results.Unauthorized();
 
+
                 //bare Admin eller SupportStaff har tilgang til å endre status
                 if (role != "Admin" && role != "SupportStaff")
                     return Results.Forbid();
@@ -174,12 +177,27 @@ namespace Backend.Endpoints
                 // finner supportsaken med en gitt ID
                 var supportCase = await db.SupportCases.FindAsync(id);
 
+
                 // Hvis den ikke finnes, så returneres 404 Not Found
                 if (supportCase == null)
                     return Results.NotFound($"Support-sak med ID {id} ble ikke funnet.");
 
+
                 var gammelStatus = supportCase.Status; // Ta vare på nåværende status før endring
                 supportCase.Status = request.Status;   // Oppdaterer til ny status
+
+
+                // logikk for når saken ble lukket
+                if (request.Status == "Closed")
+                {
+                    supportCase.ClosedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    // Fjern lukketid dersom saken åpnes på nytt
+                    supportCase.ClosedAt = null;
+                }
+
 
                 // lagrer endringene i databasen
                 await db.SaveChangesAsync();

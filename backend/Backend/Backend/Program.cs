@@ -16,6 +16,8 @@ using Backend.Endpoints; // for MapSupportCaseEndpoints
 
 
 
+
+
 // Lager en builder for å konfigurere appen
 var builder = WebApplication.CreateBuilder(args); // Starter konfigurasjon av appen
 
@@ -150,6 +152,7 @@ app.MapGet("/ping", () => Results.Ok("pong")); // en test for endepunkt
 // Starter appen (webserveren)
 app.MapControllers(); // kontrollerbasert API
 app.MapSupportCaseEndpoints(); // minimal API-er for support
+app.MapAdminEndpoints(); // for adminDashbord endpoint
 app.Run();
 
 
