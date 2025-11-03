@@ -75,12 +75,19 @@ Applikasjonen benytter **JWT-basert autentisering** og **rollebasert autorisasjo
   - Claims og rolleuttrekk fra JWT
   - Tilgangsnivå og sikkerhetskontroller
   - Logging og sporbarhet
+    
  
-- - Legge til automatiserte tester:
+-  Legge til automatiserte tester:
 
   - Unit-tester med xUnit for backend-logikk.
   - Integrasjonstester for API-endepunkter og databaseoperasjoner.
   - End-to-end-tester med Playwright for frontendens brukerflyt.
+ 
+
+- Frontend og brukeropplevelse
+  
+- Implementere WebSocket-basert oppdatering slik at supportsaker oppdateres i sanntid uten refresh.
+- Utvikle et agent-dashboard med live-notifikasjoner når nye saker opprettes eller status endres.
 
 
 ---
