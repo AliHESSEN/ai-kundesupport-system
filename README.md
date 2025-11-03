@@ -76,15 +76,12 @@ Applikasjonen benytter **JWT-basert autentisering** og **rollebasert autorisasjo
   - Tilgangsnivå og sikkerhetskontroller
   - Logging og sporbarhet
  
-  Testdekning
+- Testdekning
 
-Legge til automatiserte tester:
-
-Unit-tester med xUnit for backend-logikk.
-
-Integrasjonstester for API-endepunkter og databaseoperasjoner.
-
-End-to-end-tester med Playwright for frontendens brukerflyt.
+  - Legge til automatiserte tester:
+  - Unit-tester med xUnit for backend-logikk.
+  - Integrasjonstester for API-endepunkter og databaseoperasjoner.
+  - End-to-end-tester med Playwright for frontendens brukerflyt.
 
 
 ---
