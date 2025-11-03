@@ -29,6 +29,7 @@ Systemet skal effektivisere kundesupport gjennom:
 
 - Brukerautentisering og roller
 - AI-chatbot for automatiserte svar
+- Implementere RAG (Retrieval-Augmented Generation) ved å bruke pgvector i PostgreSQL for å lagre embeddings fra supportsaker. Dette vil gi AI-chatboten kontekstsensitive svar basert på tidligere henvendelser og intern kunnskap.
 - Opprettelse og visning av supportsaker
 - Endring av sakstatus (kun SupportStaff og Admin)
 - Rollebasert tilgangsstyring direkte i API
