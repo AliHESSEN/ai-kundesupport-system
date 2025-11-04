@@ -77,18 +77,45 @@ Applikasjonen benytter **JWT-basert autentisering** og **rollebasert autorisasjo
   - Tilgangsnivå og sikkerhetskontroller
   - Logging og sporbarhet
     
- 
--  Legge til automatiserte tester:
 
-  - Unit-tester med xUnit for backend-logikk.
-  - Integrasjonstester for API-endepunkter og databaseoperasjoner.
-  - End-to-end-tester med Playwright for frontendens brukerflyt.
- 
 
 - Frontend og brukeropplevelse
   
 - Implementere WebSocket-basert oppdatering slik at supportsaker oppdateres i sanntid uten refresh.
 - Utvikle et agent-dashboard med live-notifikasjoner når nye saker opprettes eller status endres.
+
+
+
+
+## Integrasjonstester (Backend)
+
+Integrasjonstestene verifiserer at hele backend-applikasjonen – inkludert API-endepunkter, autentisering og database – fungerer som forventet i et realistisk miljø.  
+Testene kjøres automatisk mot en **isolert SQLite-database** og starter opp hele web-API-et via `WebApplicationFactory`.
+
+### Oppsett og arkitektur
+
+| Komponent | Teknologi / Rammeverk |
+|------------|------------------------|
+| **Testrammeverk** | xUnit |
+| **Assertion-bibliotek** | FluentAssertions |
+| **Test-API** | Microsoft.AspNetCore.Mvc.Testing |
+| **Database (Testing)** | SQLite (via Entity Framework Core) |
+| **Autentisering (Testing)** | Mocket JWT (testnøkkel lagret i minnet) |
+| **Miljø** | `Testing` (settes automatisk under testkjøring) |
+
+---
+
+### CustomWebApplicationFactory
+
+Applikasjonen bruker `CustomWebApplicationFactory` for å konfigurere miljøet og testinnstillingene.  
+Denne klassen spinner opp hele backend-API-et i et eget testmiljø og injiserer følgende konfigurasjon direkte i minnet:
+
+```csharp
+["ConnectionStrings:TestConnection"] = "Data Source=TestDb.sqlite";
+["JwtSettings:SecretKey"] = "TestSigningKey123!";
+["JwtSettings:Issuer"] = "TestIssuer";
+["JwtSettings:Audience"] = "TestAudience";
+
 
 
 ---
