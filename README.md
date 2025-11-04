@@ -93,21 +93,13 @@ Integrasjonstestene verifiserer at hele backend-applikasjonen — inkludert API-
 De kjører automatisk mot en isolert testdatabase (SQLite) og starter opp hele web-API-et via WebApplicationFactory.
 
 Oppsett og arkitektur
-
-Testrammeverk: xUnit
-
-Assertion-bibliotek: FluentAssertions
-
-Test-API: Microsoft.AspNetCore.Mvc.Testing
-
-Database for testing: SQLite (via Entity Framework Core)
-
-Autentisering: Mocket JWT (testnøkkel satt i minne)
-
-Miljø: Testing (settes automatisk under testkjøring)
-
-Applikasjonen bruker CustomWebApplicationFactory som konfigurerer miljøet og testinnstillingene.
-Denne klassen spinner opp hele Backend-API-et i et eget testmiljø, og injiserer følgende konfigurasjon direkte i minnet:
+Komponent	Teknologi / Rammeverk
+Testrammeverk	xUnit
+Assertion-bibliotek	FluentAssertions
+Test-API	Microsoft.AspNetCore.Mvc.Testing
+Database (Testing)	SQLite (via Entity Framework Core)
+Autentisering (Testing)	Mocket JWT (testnøkkel lagret i minnet)
+Miljø	Testing (settes automatisk under testkjøring)
 
 
 ---
