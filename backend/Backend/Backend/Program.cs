@@ -13,35 +13,39 @@ using Backend.Initialization;
 using System.Security.Claims;
 using Backend.Endpoints; // for MapSupportCaseEndpoints
 
-
-
-
-
-
 // Lager en builder for å konfigurere appen
 var builder = WebApplication.CreateBuilder(args); // Starter konfigurasjon av appen
 
-
-// Registrerer databasen (DbContext) og setter opp tilkoblingen til PostgreSQL
+// Registrerer databasen (DbContext) – bruker riktig database avhengig av miljø
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))); //henter connection string fra appsettings.json
-
+{
+    // Hvis appen kjører i "Testing" (settes av testene), bruk SQLite
+    if (builder.Environment.IsEnvironment("Testing"))
+    {
+        var testConn = builder.Configuration.GetConnectionString("TestConnection")
+                        ?? "Data Source=TestDb.sqlite";
+        options.UseSqlite(testConn);
+    }
+    else
+    {
+        // Ellers (utvikling eller produksjon): bruk PostgreSQL
+        var pgConn = builder.Configuration.GetConnectionString("DefaultConnection");
+        options.UseNpgsql(pgConn);
+    }
+});
 
 // Registrerer Identity-systemet som skal bruke databasen vår
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-
 // Legger til våre egne tjenester i Dependency Injection
 builder.Services.AddScoped<JwtHelper>(); // registrerer JwtHelper
 builder.Services.AddScoped<AuthService>(); // registrerer AuthService
 
-
 // Henter ut JWT-innstillinger fra appsettings.json
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
-
 
 // Konfigurerer JWT-autentisering
 builder.Services.AddAuthentication(options =>
@@ -59,36 +63,28 @@ builder.Services.AddAuthentication(options =>
 
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey ?? string.Empty))
     };
 });
-
-
 
 // Legger til støtte for kontrollerne våre (f.eks. AuthController)
 builder.Services.AddControllers();
 
-
-
 // Legger til støtte for Swagger (API-dokumentasjon)
-builder.Services.AddEndpointsApiExplorer(); //legger til støtte for minimal API-dokumentasjon
-
-
+builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
     // Definerer hvordan Swagger skal håndtere JWT-token i UI
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
-        Name = "Authorization", // Navnet på header-feltet som brukes
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http, // Vi bruker HTTP-skjema
-        Scheme = "Bearer", // Forteller at vi bruker Bearer tokens
-        BearerFormat = "JWT", // Formatet er JWT
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header, // Token skal legges i HTTP header
-        Description = "Skriv inn JWT-tokenet slik: Bearer {token}" // Bruksbeskrivelse i Swagger UI
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Skriv inn JWT-tokenet slik: Bearer {token}"
     });
-
-
 
     // Sier til Swagger at alle endpoints kan sikres med denne Bearer-skjemaet
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
@@ -99,63 +95,59 @@ builder.Services.AddSwaggerGen(options =>
                 Reference = new Microsoft.OpenApi.Models.OpenApiReference
                 {
                     Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer" // Henviser til definisjonen vi laget over
+                    Id = "Bearer"
                 }
             },
-            Array.Empty<string>() // Ingen spesifikke scopes kreves
+            Array.Empty<string>()
         }
     });
 });
 
-
-
-
-
 // Bygger appen basert på konfigureringen over
 var app = builder.Build();
 
-
-
-// dette lager admin, SupportStaff og User rollene i databasen hvis de ikke finnes fra før
+// Opprett/migrer DB før seeding – trygt skilt mellom Testing (SQLite) og andre miljø (PostgreSQL)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var db = services.GetRequiredService<AppDbContext>();
+
+    if (app.Environment.IsEnvironment("Testing"))
+    {
+        // For integrasjonstester: start fra blank, isolert SQLite-fil
+        await db.Database.EnsureDeletedAsync();
+        await db.Database.EnsureCreatedAsync();
+        app.Logger.LogInformation("Database initialisert for TESTING med SQLite (EnsureDeleted + EnsureCreated).");
+    }
+    else
+    {
+        // I dev/prod: migrer PostgreSQL
+        await db.Database.MigrateAsync();
+        app.Logger.LogInformation("Database migrert (Migrate) for {EnvironmentName}.", app.Environment.EnvironmentName);
+    }
+
     await DataInitializer.SeedRolesAsync(services);
 }
-
-
-
 
 // Viser Swagger kun i utviklingsmiljø
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(); //aktiverer Swagger i dev
-    app.UseSwaggerUI(); //aktiverer Swagger UI
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-
-
 // Tvinger HTTPS-omdirigering
-app.UseHttpsRedirection(); // Omdirigerer automatisk HTTP til HTTPS
+app.UseHttpsRedirection();
 
 // Legger til autentisering og autorisasjon i pipeline
-app.UseAuthentication(); // aktiverer autentisering (JWT)
-app.UseAuthorization(); // aktiverer autorisasjon
-
-
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Enkelt test-endepunkt som returnerer "pong" ved GET /ping
-app.MapGet("/ping", () => Results.Ok("pong")); // en test for endepunkt
-
-
+app.MapGet("/ping", () => Results.Ok("pong"));
 
 // Starter appen (webserveren)
-app.MapControllers(); // kontrollerbasert API
-app.MapSupportCaseEndpoints(); // minimal API-er for support
-app.MapAdminEndpoints(); // for adminDashbord endpoint
+app.MapControllers();
+app.MapSupportCaseEndpoints();
+app.MapAdminEndpoints();
 app.Run();
-
-
-
-
-
