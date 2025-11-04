@@ -87,19 +87,35 @@ Applikasjonen benytter **JWT-basert autentisering** og **rollebasert autorisasjo
 
 
 
-## Dokumentasjon og videre utvikling
+## Integrasjonstester (Backend)
 
-Integrasjonstestene verifiserer at hele backend-applikasjonen — inkludert API-endepunkter, autentisering, og database — fungerer som forventet i et realistisk miljø.
-De kjører automatisk mot en isolert testdatabase (SQLite) og starter opp hele web-API-et via WebApplicationFactory.
+Integrasjonstestene verifiserer at hele backend-applikasjonen – inkludert API-endepunkter, autentisering og database – fungerer som forventet i et realistisk miljø.  
+Testene kjøres automatisk mot en **isolert SQLite-database** og starter opp hele web-API-et via `WebApplicationFactory`.
 
-Oppsett og arkitektur
-Komponent	Teknologi / Rammeverk
-Testrammeverk	xUnit
-Assertion-bibliotek	FluentAssertions
-Test-API	Microsoft.AspNetCore.Mvc.Testing
-Database (Testing)	SQLite (via Entity Framework Core)
-Autentisering (Testing)	Mocket JWT (testnøkkel lagret i minnet)
-Miljø	Testing (settes automatisk under testkjøring)
+### Oppsett og arkitektur
+
+| Komponent | Teknologi / Rammeverk |
+|------------|------------------------|
+| **Testrammeverk** | xUnit |
+| **Assertion-bibliotek** | FluentAssertions |
+| **Test-API** | Microsoft.AspNetCore.Mvc.Testing |
+| **Database (Testing)** | SQLite (via Entity Framework Core) |
+| **Autentisering (Testing)** | Mocket JWT (testnøkkel lagret i minnet) |
+| **Miljø** | `Testing` (settes automatisk under testkjøring) |
+
+---
+
+### CustomWebApplicationFactory
+
+Applikasjonen bruker `CustomWebApplicationFactory` for å konfigurere miljøet og testinnstillingene.  
+Denne klassen spinner opp hele backend-API-et i et eget testmiljø og injiserer følgende konfigurasjon direkte i minnet:
+
+```csharp
+["ConnectionStrings:TestConnection"] = "Data Source=TestDb.sqlite";
+["JwtSettings:SecretKey"] = "TestSigningKey123!";
+["JwtSettings:Issuer"] = "TestIssuer";
+["JwtSettings:Audience"] = "TestAudience";
+
 
 
 ---
