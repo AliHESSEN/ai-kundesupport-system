@@ -1,7 +1,6 @@
 # Kundesupport-system med AI-integrasjon
 
-Et fullstack websystem for håndtering av supportsaker med integrert AI-chatbot. Prosjektet er utviklet for å demonstrere hele utviklingspipen – fra idé og arkitektur til produksjonssetting – med moderne teknologier brukt i næringslivet.
-
+Et fullstack websystem for håndtering av supportsaker med integrert AI-chatbot. Prosjektet er utviklet for å demonstrere hele utviklingspipen  fra idé og arkitektur til produksjonssetting
 ## Formål
 
 Systemet skal effektivisere kundesupport gjennom:
