@@ -124,6 +124,7 @@ Denne klassen spinner opp hele backend-API-et i et eget testmiljø og injiserer 
 ["JwtSettings:SecretKey"] = "TestSigningKey123!";
 ["JwtSettings:Issuer"] = "TestIssuer";
 ["JwtSettings:Audience"] = "TestAudience";
+```
 
 
 
