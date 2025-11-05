@@ -103,6 +103,15 @@ Testene kjøres automatisk mot en **isolert SQLite-database** og starter opp hel
 | **Autentisering (Testing)** | Mocket JWT (testnøkkel lagret i minnet) |
 | **Miljø** | `Testing` (settes automatisk under testkjøring) |
 
+
+### Testdatabase og videre planer
+
+- SQLite (Testing):
+  Brukes som testdatabase for integrasjonstester. Lettvekts, rask og enkel å kjøre i et isolert miljø. Godt egnet for autentisering, autorisasjon, validering og vanlige CRUD-operasjoner.
+
+- PostgreSQL + Testcontainers:
+  Skal brukes for avanserte tester som krever ekte PostgreSQL-funksjonalitet, inkludert pgvector, komplekse spørringer, migrasjoner og RAG/AI-relaterte operasjoner.
+
 ---
 
 ### CustomWebApplicationFactory
