@@ -5,10 +5,10 @@ namespace Backend.Initialization
 {
     public static class DataInitializer
     {
-        // Denne metoden oppretter nødvendige roller hvis de ikke finnes fra før
+        // Oppretter nødvendige roller hvis de ikke finnes (idempotent)
         public static async Task SeedRolesAsync(IServiceProvider serviceProvider)
         {
-            // Henter RoleManager fra DI (dependency injection)
+            // Denne metoden oppretter nødvendige roller hvis de ikke finnes fra før
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
             // Definerer rollene som skal opprettes
@@ -19,7 +19,17 @@ namespace Backend.Initialization
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
                 {
-                    await roleManager.CreateAsync(new IdentityRole(roleName));
+                    var result = await roleManager.CreateAsync(new IdentityRole(roleName)
+                    {
+                        
+                        NormalizedName = roleName.ToUpperInvariant()
+                    });
+
+                    if (!result.Succeeded)
+                    {
+                        var errors = string.Join(", ", result.Errors.Select(e => $"{e.Code}:{e.Description}"));
+                        throw new InvalidOperationException($"Klarte ikke å opprette rolle '{roleName}': {errors}");
+                    }
                 }
             }
         }
