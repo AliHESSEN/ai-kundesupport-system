@@ -15,6 +15,7 @@ using Backend.Endpoints;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq; // <-- VIKTIG for LINQ
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Registrerer databasen (DbContext) – bruker riktig database avhengig av miljø
@@ -41,6 +42,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 // Egendefinerte tjenester
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddScoped<AuthService>();
+
+// AI-tjenesten (Groq)
+builder.Services.AddHttpClient<IAIService, GroqAIService>();
+
 
 // Slå av claim-mapping (behold "sub", "role" osv.)
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -190,6 +195,14 @@ if (app.Environment.IsEnvironment("Testing"))
 app.MapControllers();
 app.MapSupportCaseEndpoints();
 app.MapAdminEndpoints();
+
+
+app.MapPost("/api/ai/ask", async (IAIService ai, AskRequest req) =>
+{
+    var answer = await ai.AskAsync(req.Question);
+    return Results.Ok(new { answer });
+});
+
 
 app.Run();
 
