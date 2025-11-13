@@ -17,7 +17,7 @@ Systemet skal effektivisere kundesupport gjennom:
 | Backend           | C# / ASP.NET Core (Minimal API)       |
 | Frontend          | React (Next.js) + TypeScript          |
 | Database          | PostgreSQL + Entity Framework Core    |
-| AI-integrasjon    | OpenAI API (GPT-4 / GPT-3.5)          |
+| AI-integrasjon    | Groq API (openai/gpt-oss-20b)         |
 | Autentisering     | ASP.NET Identity + JWT                |
 | Logging/Monitoring| Grafana Cloud / Sentry.io             |
 | CI/CD             | GitHub Actions                        |
