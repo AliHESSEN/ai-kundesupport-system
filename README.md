@@ -126,6 +126,24 @@ Denne klassen spinner opp hele backend-API-et i et eget testmiljø og injiserer 
 ```
 
 
+### AI-integrasjon (Groq API)
+
+| Komponent                   | Teknologi / Rammeverk                        |
+| --------------------------- | -------------------------------------------- |
+| **AI-leverandør**           | Groq API (OpenAI-kompatibelt)                |
+| **Modell**                  | openai/gpt-oss-20b                           |
+| **Kommunikasjon**           | HttpClient (REST, JSON-basert)               |
+| **Abstraksjonslag**         | `IAIService`                                 |
+| **Implementasjon**          | `GroqAIService`                              |
+| **Konfigurasjon**           | appsettings.json + User Secrets              |
+| **Autentisering mot Groq**  | Bearer Token (API-nøkkel)                    |
+| **API-endepunkt (Backend)** | POST /api/ai/ask                             |
+| **Format for forespørsler** | OpenAI Chat Completions-protokoll            |
+| **Miljøhåndtering**         | API-nøkler via User Secrets / miljøvariabler |
+
+
+AI-delen av systemet er nå oppdatert til å bruke Groq API som erstatning for OpenAI. Groq tilbyr OpenAI-kompatible modeller med svært høy ytelse og uten kostnader for utvikling og testing. Integrasjonen er lagt inn i backend gjennom en dedikert AI-tjeneste som håndterer kommunikasjon mot Groq sin modell, og et eget API-endepunkt som gjør det mulig for frontend å sende inn spørsmål og motta AI-genererte svar. API-nøkler lagres ikke i prosjektet, men håndteres via User Secrets eller miljøvariabler for å sikre god praksis innen sikkerhet og secrets management.
+
 
 ---
 
