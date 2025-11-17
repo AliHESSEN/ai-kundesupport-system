@@ -10,7 +10,7 @@ public class GroqAIService : IAIService
     public GroqAIService(HttpClient httpClient, IConfiguration config)
     {
         _httpClient = httpClient;
-        _apiKey = config["Groq:ApiKey"]!; // henter API-nøkkel fra config
+        _apiKey = config["Groq:ApiKey"]!; // henter API-nøkkel fra secrets
 
         _httpClient.BaseAddress = new Uri("https://api.groq.com/openai/v1/"); // base-URL til Groq API
         _httpClient.DefaultRequestHeaders.Authorization =
