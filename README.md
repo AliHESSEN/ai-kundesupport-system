@@ -144,6 +144,10 @@ Denne klassen spinner opp hele backend-API-et i et eget testmiljø og injiserer 
 
 AI-delen av systemet er nå oppdatert til å bruke Groq API som erstatning for OpenAI. Groq tilbyr OpenAI-kompatible modeller med svært høy ytelse og uten kostnader for utvikling og testing. Integrasjonen er lagt inn i backend gjennom en dedikert AI-tjeneste som håndterer kommunikasjon mot Groq sin modell, og et eget API-endepunkt som gjør det mulig for frontend å sende inn spørsmål og motta AI-genererte svar. API-nøkler lagres ikke i prosjektet, men håndteres via User Secrets eller miljøvariabler for å sikre god praksis innen sikkerhet og secrets management.
 
+### Container
+
+For å kunne bruke RAG-funksjonalitet i systemet må databasen støtte lagring og søk i embeddings. Dette krever PostgreSQL-utvidelsen pgvector. Siden pgvector ikke er tilgjengelig som ferdig pakke på Windows, benytter jeg en PostgreSQL-instans som kjører i Docker, hvor pgvector allerede er installert og klar til bruk. Denne løsningen gir et mer stabilt og standardisert miljø, og samsvarer med hvordan databaser vanligvis kjøres i skybaserte produksjonssystemer. Etter oppsettet kunne jeg koble meg til databasen og aktivere pgvector-utvidelsen. Databasen er dermed forberedt på å håndtere embeddings og vektorsøk, som er en nødvendig del av RAG-arkitekturen og AI-funksjonaliteten i prosjektet.
+
 
 ---
 
